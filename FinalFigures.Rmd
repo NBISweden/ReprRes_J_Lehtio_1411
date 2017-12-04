@@ -13,7 +13,7 @@ First load required libraries and some convenient helper functions; set director
 
 ```{r libs, results="hide", eval=TRUE}
 source(file="Helper.R", echo=FALSE, verbose=FALSE)
-libs=c("abind","ggplot2","gridExtra","gridGraphics","R.utils","plyr","knitr","WriteXLS")
+libs=c("abind","ggplot2","gridExtra","R.utils","plyr","knitr","WriteXLS")
 checklibs(libs)
 
 indir="R-files/"
