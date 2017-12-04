@@ -21,7 +21,7 @@ outdir="FinalOutput_160901/"
 ## To recreate old (pre 160901) results using an erroneous rotation matrix for ii-vi, set the following variable to TRUE
 showOldErrorneousVersion = FALSE
 if(showOldErrorneousVersion == TRUE){
- outdir="FinalOutput/"  
+ outdir="FinalOutput/"  updat
 }
 dir.create(outdir, showWarnings=FALSE)
 

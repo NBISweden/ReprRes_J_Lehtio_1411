@@ -2,7 +2,8 @@ checklibs<-function(libs){
   toinstall <- libs[!(libs %in% installed.packages()[,"Package"])]
   if(length(toinstall) > 0){
     print(paste("Installing packages",toinstall))
-    install.packages(toinstall, repos = 'http://cran.rstudio.com', dependencies=TRUE)
+    install.packages(toinstall, repos = 'https://cloud.r-project.org', dependencies=TRUE)
+    #install.packages(toinstall, repos = 'http://cran.rstudio.com', dependencies=TRUE)
   }
   toinstall <- libs[!(libs %in% installed.packages()[,"Package"])]
   if(length(toinstall) > 0){
