@@ -31,7 +31,7 @@ Lehtio's group (usually in Excel format), reformat data to format
 useful in the present analyses, and save them as a R-object, for 
 later use in .Rmd-files.
 
-* __add updating_gene_symbols.R__
+* __updating_gene_symbols.R__
 Fixing some gene symbol errors in mRNA data
 
 ##### Miscellaneous files
