@@ -10,7 +10,7 @@ This file.
 
 ##### Folders
 
-* Data/ Directory holding the data provided by the Lehtiö group
+* __Data/__ Directory holding the data provided by the Lehtiö group
 
 ##### Main R-files
 The two .RMD documents perform the main analyses in this repository.
