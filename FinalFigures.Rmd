@@ -1,0 +1,771 @@
+---
+title: "FinalFigures_160901"
+author: "Bengt Sennblad"
+output: html_document
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+---
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE,eval=TRUE)
+```
+
+First load required libraries and some convenient helper functions; set directory for reading data
+
+```{r libs, results="hide", eval=TRUE}
+source(file="Helper.R", echo=FALSE, verbose=FALSE)
+libs=c("abind","ggplot2","gridExtra","gridGraphics","R.utils","plyr","knitr","WriteXLS")
+checklibs(libs)
+
+indir="R-files/"
+outdir="FinalOutput_160901/"
+## To recreate old (pre 160901) results using an erroneous rotation matrix for ii-vi, set the following variable to TRUE
+showOldErrorneousVersion = FALSE
+if(showOldErrorneousVersion == TRUE){
+ outdir="FinalOutput/"  
+}
+dir.create(outdir, showWarnings=FALSE)
+
+#Default scatterpot point size 
+myscatterpointsize=0.5
+mybasesize = 5
+PAM50cols=c("Basal"="#E31A1C", "Her2"="#FB9A99","LumA"="#1F78B4","LumB"="#A6CEE3","Normal"="#33A02C")
+
+# Standard scatterplot of two variables
+scatterplot<-function(data,x,y, hadjust=-0.2){
+  ret=ggplot(data,aes(x=data[,x], y=data[,y]))+
+    stat_bin2d(bins=75)+
+    scale_fill_gradientn(limits=c(0,150), breaks=seq(0, 150, by=25), colours=rainbow(4))+
+    theme_classic(base_size=8)+
+    theme(axis.line.y = element_line(colour = "black", linetype="solid", size=0.5),axis.line.x = element_line(colour = "black", linetype="solid", size=0.5))+
+    theme(plot.title = element_text(hjust=hadjust,margin = margin(l=2,r=2,t = 0, b = -5)))+
+    theme(legend.justification=c(0,1),legend.position=c(0.7,0.5),legend.title=element_blank(), legend.key.size=unit(6, "pt"),legend.text=element_text(size=4))
+  return(ret)
+}
+
+# saturation transformation function
+satf<-function(y){
+  ysat = 1.0
+  return(y/(ysat-y))
+}
+
+# This is mainly a helper function called by other plot functions
+# returns a list with a data.frame with a saturation transformed 
+# version of y and a function for the regression line between the 
+# transformed y and x
+satdata<-function(data, x,y,satname){
+  # Regression between rotated mRNA and correlations
+  regcorrxp=lm(satf(data[,y])~data[,x])
+  data$residuals=regcorrxp$residuals
+  pars=regcorrxp$coefficients
+  k=pars[2]
+  m=pars[1]
+  regline=function(x){
+    return(k*x+m)
+  }
+  ret <- data
+  ret[,satname] <- satf(ret[,y])
+  return(list(ret,regline)) 
+}
+
+# plots a scatterplot of x and saturation-transformed y, with density 
+# of plots indicated by stat_bin2d, and a regression line
+binsatplot<-function(data, x,y){
+  # get the transformed data and regression line function
+  tmpname=paste("transformed",y,sep="_")
+  tmp = satdata(data,x,y,tmpname)
+  # the plot
+  ret = ggplot(tmp[[1]],aes(x=tmp[[1]][,x], y=tmp[[1]][,tmpname]))+
+    theme_classic(base_size=8)+
+    theme(axis.line.y=element_line(colour="black",linetype="solid",size=0.5),axis.line.x = element_line(colour = "black", linetype="solid", size=0.5))+
+    theme(plot.title = element_text(hjust=-0.2,margin = margin(l=2,r=2,t = 0, b = -5)))+
+    stat_bin2d(bins=75,)+ 
+    scale_fill_gradientn(limits=c(0,150),breaks=seq(0,150,by=25),colours=rainbow(4))+
+    theme(legend.justification=c(1,0),legend.position=c(0.35,0.6),legend.title=element_blank(), legend.key.size=unit(6, "pt"),legend.text=element_text(size=4))+
+    stat_function(fun=tmp[[2]])
+  return(ret)    
+}
+
+# plots a scatterplot of x and saturation-transformed y, the subset defined 
+# by meta in a different color and a regression line 
+groupsatplot<-function(data,x,y,meta){
+  tmpname = paste("transformed",y,sep = "_")
+  tmp = satdata(data,x, y, tmpname)
+  metaset=data[rownames(data) %in% exprdata$metagene[[meta]],]
+  tmp2=satdata(metaset,x,y,tmpname)
+  ret=ggplot(tmp[[1]],aes(x=tmp[[1]][,x], y=tmp[[1]][,tmpname]))+
+    theme_classic(base_size=8)+
+    theme(axis.line.y=element_line(colour="black",linetype="solid",size=0.5),axis.line.x = element_line(colour = "black", linetype="solid", size=0.5))+
+    theme(plot.title = element_text(hjust=-0.1,margin = margin(l=2,r=2,t = 0, b = -5)))+
+    geom_point(colour="red", size=myscatterpointsize)+
+    geom_point(data=metaset,aes(x=tmp2[[1]][,x], y=tmp2[[1]][,tmpname]),colour="black", size=myscatterpointsize)+
+    stat_function(fun=tmp[[2]])
+#    geom_point(data=metaset,aes(x=metaset[,var], y=satf(metaset[,"correlations"])),colour="black", size=myscatterpointsize)+
+  return(ret)
+}
+
+metasatplot<-function(data,x,y,meta){
+  tmpname = paste("transformed",y,sep = "_")
+  tmp = satdata(data,x, y, tmpname)
+  ret=ggplot(tmp[[1]],aes(x=tmp[[1]][,x],y=tmp[[1]][,tmpname],color=as.factor(meta)))+
+    theme_classic(base_size=8)+
+    theme(axis.line.y=element_line(colour="black",linetype="solid",size=0.5),axis.line.x = element_line(colour = "black", linetype="solid", size=0.5))+
+    theme(plot.title = element_text(hjust=-0.2,margin = margin(l=2,r=2,t = 0, b = -5)))+
+    geom_point(size=myscatterpointsize)+
+    stat_function(fun=tmp[[2]])
+  
+  return(ret)
+}
+# Boxplot of data$vakue classified by group
+bxplot<-function(data, group, value){
+  ret=ggplot(data, aes(factor(group), value))+
+    geom_boxplot()+
+    theme_classic(base_size=8)+
+    theme(axis.line.y = element_line(colour = "black", linetype="solid", size=0.5),axis.line.x = element_line(colour = "black", linetype="solid", size=0.5))+
+    theme(plot.title = element_text(hjust=-0.12,margin = margin(t = 0, b = -5)))+
+    theme(axis.text.x = element_text(angle=45,vjust=1,hjust=1))
+  return(ret)      
+}
+
+tumourplot<-function(data,x,y,fill){
+  ret=ggplot(data,aes(x=reorder(data[,x],data[,y]), y=data[,y], fill=data[,fill]))+
+    scale_fill_manual(values=PAM50cols)+
+    geom_bar(stat="identity")+
+    theme_classic(base_size=8)+
+    theme(axis.line.y = element_line(colour = "black", linetype="solid", size=0.5),axis.line.x = element_line(colour = "black", linetype="solid", size=0.5))+
+    theme(axis.text.x = element_text(angle=90,vjust=1,hjust=1,size=4),text=element_text(size=5))+
+    theme(plot.title = element_text(hjust=-0.05,margin = margin(l=2,r=2,t = 0, b = -5)))+
+    theme(legend.justification=c(1,0),legend.position=c(0.2,0.8),legend.title=element_blank(), legend.key.size=unit(6, "pt"),legend.text=element_text(size=4))+
+    geom_hline(aes(yintercept=mean(data[,y])), linetype="dashed")+
+    annotate("text", y=mean(data[,y])+0.02,x=4.5,
+           label=paste("mean=",round(mean(data[,y]),3)),size=1.5)
+  return(ret)
+}
+
+
+```
+
+Load the R-object containing data (construct it if it does not exist).
+
+```{r loaddata, eval=TRUE}
+# Create infile if needed
+if(!file.exists(paste(indir,"tumourExpressionData", sep="/"))){
+  source(file="formatData.R")
+  indir="R-files/"
+  outdir="Output/"
+}
+# load expression working data as an R object called exprdata
+load(paste(indir,"tumourExpressionData",sep="/"))
+# Identify intersection of gene names and tumour names
+genes=intersect(rownames(exprdata$protexpr),rownames(exprdata$rnaexpr))
+tumours=intersect(colnames(exprdata$protexpr), colnames(exprdata$rnaexpr))
+# create a 3D array of corresponding expression data, with tumours as cols and genes as rows, add names for the new dimension 
+data=abind(exprdata$protexpr[genes,tumours],exprdata$rnaexpr[genes,tumours], along=3,new.names=c(NULL,NULL,c("prot","rna")))
+```
+
+We first perform the correlation analysis, and focus on Spearman correlations.
+
+```{r makecorr, eval=TRUE, include=FALSE}
+method="spearman"
+# Create correlations and plots using spearman correlations
+corr_label=paste(capitalize(method),"correlations") # label for correlation axis
+
+source(file="Helper.R", echo=FALSE, verbose=FALSE)
+
+# create the correlations over tumours and over genes
+corr_tumour = doCorrDiagPairs(data, meth=method, meta=data.frame(PAM50=exprdata$metatumour[,"PAM50"]), indexname="tumour")
+corr_genes = doCorrDiagPairs(data,meth=method, marg=c(1), indexname="gene")
+#we want to just correlate for each tumours using the 300 best correlations
+all = rownames(corr_genes)
+best300 = rownames(corr_genes[order(corr_genes$correlations, decreasing=TRUE),])[0:300]
+subsets=list(all=all,best300=best300)
+tmp=doCorrDiagPairs(data[best300,,],meth=method,indexname="tumour")
+names(tmp)= paste("Best300",names(tmp),sep=".")
+
+corr_tumour=merge(corr_tumour,tmp[,c("Best300.correlations","Best300.Pval","Best300.Padjust")],by="row.names")
+rownames(corr_tumour) = corr_tumour$Row.names
+corr_tumour$Row.names=NULL
+# corr_tumour[["Best300.correlations"]] = tmp$correlations
+# corr_tumour[["Best300.Pval"]] = tmp$Pval
+# corr_tumour[["Best300.Padjust"]] = tmp$Padjust
+
+
+# corr_tumour[["Best300"]]=doCorrDiagPairs(data[best300,,],meth=method,meta=data.frame(PAM50=exprdata$metatumour[,"PAM50"]),indexname="tumour")
+```
+
+
+We save the the correlations as tab-delimited text files to make it available to Henrik and other users.
+
+```{r savecorr}
+outfile=paste(outdir,paste("Lehtio.all",method,"tumour_correlationdata.txt",sep="."),sep="/")
+write.table(corr_tumour,file=outfile,sep="\t", row.names=FALSE)
+
+outfile=paste(outdir,paste("Lehtio.all",method,"gene_correlationdata.txt",sep="."),sep="/")
+write.table(corr_genes,file=outfile,sep="\t", row.names=FALSE)
+
+```
+
+
+We also want to, eventually, relate correlations to variance statistics. So compute these stats as well.
+
+```{r makestats,eval=TRUE}
+# create stats for prot and rna data and combined them with correlations
+statp = getStat(data[,,"prot"],c(1))
+names(statp)=sub("^","protein ",names(statp))
+statr = getStat(data[,,"rna"],c(1))
+names(statr)=sub("^","mRNA ",names(statr))
+statcorr = cbind(statp,statr,corr_genes)
+```
+
+# i) Main figure
+A) The gene-wise mRNA and protein Spearman correlation. The mean correlation is indicated by a vertical line. The p-values for correlations are BH-corrected.
+B) The distribution of mRNA-protein Spearman correlation for different pre-specified protein groups. The mean values are indicated by a horizontal bar, boxes indicate the 0.25 and 0.75 quantiles, and vertical bars indicate values within 1.5 * interquartile range; values outside this range are indicated by dots.
+
+
+Notes:
+1) cutoff p<=0.05 does not map exactly between two bars. 
+2) Notice that there are also significant negative correlations
+3) I could not find the "non-tumour genes" group (as cited in Henrik's figure sketch) in the Genelist excel file from Henrik.
+4) I have throughout removed "Spearman" from the axis labels in the plots and instead added it to the figure text. My argument is this makes the plot layout so much nicer (maybe mainly for some plots, but one have to be consistent here), and the info will still be available in the legends.
+
+```{r figi}
+# genes ordered by correlation value, and labeled by FDR
+signlevel = 0.05
+myalpha=1
+p1=ggplot(corr_genes,aes(x=correlations))+
+  scale_fill_grey(start=0,end=1)+
+  geom_histogram(aes(alpha=myalpha,fill=(abs(correlations)<=0.3152) ,y = 100*..count../sum(..count..)), bins=30, color="black")+
+  scale_x_continuous(expand = c(0, 0),"mRNA vs protein correlation")+
+  scale_y_continuous(expand = c(0, 0),"Frequency (%)", limits=c(0,9))+
+  theme_classic(base_size=8)+
+  theme(axis.line.y = element_line(colour = "black", linetype="solid", size=0.5),axis.line.x = element_line(colour = "black", linetype="solid", size=0.5))+
+  guides(fill=FALSE)+
+  geom_vline(aes(xintercept=mean(corr_genes$correlations)))+
+  ggtitle("A")+
+  theme(plot.title = element_text(hjust=-0.1,margin = margin(t = 0, b = -10)))+ 
+  theme(legend.justification=c(0,1),legend.position=c(0,1),legend.title=element_blank(), legend.key.size=unit(5, "pt"))+
+  scale_alpha_continuous(breaks=c(1),labels=c("Significant correlation p<0.05"))+
+  annotate("text",x=-0.45,y=7.4,hjust=0,vjust=1,label=paste("n=",length(corr_genes$correlation),"\nmedian=",sprintf("%.2f",median(corr_genes$correlation)),"\nmean=",sprintf("%.2f",mean(corr_genes$correlation)),sep=""), size=2)
+
+# We want split up genes in Henrik and Janne's "protein groups" and do correlations
+
+#  [1] "Pred_membrane"   
+#  [2] "GPCR"                                                        
+#  [3]                                                    
+#  [4] "Mitochondrial"                                               
+#  [5] "Cytoskeleton"                                                
+#  [6]                                                 
+#  [7] "Pred_Secreated"                                              
+#  [8]                                        
+#  [9]                           
+# [10] "Potential_drug_targets"                                      
+# [11] "CCDB"                                                        
+# [12] "dbEMT"                                                       
+# [13] "E3_Ligase"                                                   
+# [14]                                                  
+# [15] "Kinome"                                                      
+# [16]                                                       
+# [17] "Polyak_-_cell_snapshot"                                      
+# [18]                                                  
+# [19]                                       
+# [20] "93_BC_drivers_Nik-Zainal_2016_Nature"                        
+# [21] "CNA-mRNA_eQTL_1000_Genes_with_lowest_pVal_Curtis_2012_Nature"
+# [22] "ECM_cluster_1"                                               
+# [23] "ECM_cluster_2"                                               
+# [24] "Immune_(CD5,_PTPRCAP)"                                       
+# [25] "Adipose_(FABP4,_PLIN1)"                                      
+# [26] "Erythrocyte_(SPTA1,_HBB)"                                    
+# [27] "Plasma_(ALB,_A2M)"                                           
+# [28] "ECM"                                                         
+# [29] "ECM_&_ProteoGlycans"   
+
+sel_metagroups=list("Oncotype_DX",
+                    "Mammaprint_(Tian_2010)",
+                    "PAM50",
+                    "Protein_targets_of_FDA_appr._Drugs",
+                    "Ribosomal",
+                    "Spliceosome",
+                    "Transcription_factors",
+                    "Transporters")
+
+groupcorr = data.frame(group="All", value=corr_genes$correlations)
+coord=1.0
+# pvals=data.frame(group="All", value=coord, p=1)
+for(g in sel_metagroups){
+  tmpgenes=intersect(genes,exprdata$metagene[[g]])
+  g=gsub("_"," ",g)
+  tmp=data.frame(group=g, value=corr_genes$correlations[rownames(corr_genes) %in% tmpgenes])
+  groupcorr=rbind(groupcorr, tmp)
+  # p=data.frame(group=g,value=coord,p=wilcox.test(corr_genes$correlations[rownames(corr_genes) %in% tmpgenes],corr_genes$correlations)$p.value)
+  # pvals=rbind(pvals,p)
+}
+
+#plot them
+p2=bxplot(groupcorr, group, value)+
+  scale_x_discrete(element_blank())+
+  scale_y_continuous("mRNA vs protein correlation")+
+  theme(plot.margin=unit(c(0,0,1.2,0),"cm"))+
+  theme(plot.title = element_text(hjust=-0.2,margin = margin(t = 0, b = -5)))+       ggtitle("B")+
+  guides(fill=FALSE)
+lay <- rbind(c(1,2),
+             c(3,2)
+             )
+blank <- grid.rect(gp=gpar(col="white"))
+grid.arrange(p1,p2,blank, layout_matrix = lay, heights=unit(c(6,2.3),"cm"))
+
+# We want split up genes in Henrik and Janne's "protein groups" and do correlations
+
+# [30] "KEGG_RNA_polymerase"                                         
+# [31] "KEGG_Ribosome"                                               
+# [32] "KEGG_Oxidative_phosphorylation"                              
+# [33] "KEGG_Spliceosome"                                            
+# [34] "KEGG_Tryptophan_metabolism"                                  
+# [35] "KEGG_Valine,_leucine_and_isoleucine_degradation"             
+# [36] "KEGG_Fatty_acid_metabolism"                                  
+# [37] "KEGG_Steroid_hormone_biosynthesis"                           
+# [38] "Hallmark_oxidative_phosphorylation"                          
+# [39] "Hallmark_estrogen_response_early"                            
+# [40] "Hallmark_estrogen_response_late"                             
+# [41] "Hallmark_interferon_gamma_response"                          
+# [42] "Hallmark_G2M_checkpoint"                                     
+# [43] "Hallmark_interferon_alpha_response"                          
+# [44] "Hallmark_E2F_targets"                                        
+# [45] "Hallmark_MTORC1_signaling"              
+# sel_metagroups=list("KEGG_RNA_polymerase",                                        
+#                     "KEGG_Ribosome",
+#                     "KEGG_Oxidative_phosphorylation",
+#                     "KEGG_Spliceosome",
+#                     "KEGG_Tryptophan_metabolism",
+#                     "KEGG_Valine,_leucine_and_isoleucine_degradation",
+#                     "KEGG_Fatty_acid_metabolism",
+#                     "KEGG_Steroid_hormone_biosynthesis",
+#                     "Hallmark_oxidative_phosphorylation",
+#                     "Hallmark_estrogen_response_early",
+#                     "Hallmark_estrogen_response_late",
+#                     "Hallmark_interferon_gamma_response",
+#                     "Hallmark_G2M_checkpoint",
+#                     "Hallmark_interferon_alpha_response",
+#                     "Hallmark_E2F_targets",
+#                     "Hallmark_MTORC1_signaling")
+
+# groupcorr = data.frame(group="All", value=corr_genes$correlations)
+# coord=1.0
+# # pvals=data.frame(group="All", value=coord, p=1)
+# for(g in sel_metagroups){
+#   tmpgenes=intersect(genes,exprdata$metagene[[g]])
+#   g=gsub("_"," ",g)
+#   tmp=data.frame(group=g, value=corr_genes$correlations[rownames(corr_genes) %in% tmpgenes])
+#   groupcorr=rbind(groupcorr, tmp)
+#   # p=data.frame(group=g,value=coord,p=wilcox.test(corr_genes$correlations[rownames(corr_genes) %in% tmpgenes],corr_genes$correlations)$p.value)
+#   # pvals=rbind(pvals,p)
+# }
+
+# #plot them
+# p3=bxplot(groupcorr, group, value)+
+#   scale_x_discrete(element_blank())+
+#   scale_y_continuous("mRNA vs protein correlation")+
+#   ggtitle("C")+
+#   guides(fill=FALSE)
+
+# lay <- rbind(c(1,1,2,2,4,4,4),
+#              c(3,3,2,2,4,4,4)
+#              )
+# blank <- grid.rect(gp=gpar(col="white"))
+# grid.arrange(p1,p2,blank,p3, layout_matrix = lay, heights=unit(c(6,3.4),"cm"))
+
+```
+
+Saved fig as "Lehtio_i.pdf"
+
+```{r,figipdf,results="hide"}
+pdf(file=paste(outdir,"Lehtio_i.pdf",sep="/"))
+grid.arrange(p1,p2,blank, layout_matrix = lay, heights=unit(c(6,2.3),"cm"))
+dev.off()
+```
+
+# ii) Supplementary Figure
+A) mRNA-protein Spearman correlation vs mRNA standard deviation (SD). 
+B) mRNA-protein Spearman correlation vs protein SD. Colors indicate density of points.
+C) Spearman mRNA-protein correlation vs combined mRNA-protein SD, which is explained in D. 
+D) protein SD vs mRNA SD, with regression line indicated. The combined mRNA-protein SD is defined as the perpendicular projection of the points onto this regression line. The 0.25, 0.5 and 0.75 quantile limits along the regression line (i.e., along the combined mRNA-protein SD-axis) are indicated. 
+E) mRNA-protein Spearman correlation distribution over all genes and within the quantiles of the combined mRNA-protein SD. The mean values are indicated by a horizontal bar, boxes indicate the 0.25 and 0.75 quantiles, and vertical bars indicate values within 1.5 * interquartile range; values outside this range are indicated by dots.
+For subfigures A to D, individual points are binned into square bins of the coordinate system;colors indicate density of points in each bin.
+
+```{r,rotating,eval=TRUE}
+if(showOldErrorneousVersion == TRUE){
+  print("NB! This is the old (pre 160901) and erroneous version of this plot, using a faulty rotation matrix")
+}
+
+myscatterpointsize=1
+rvar="mRNA sd"
+pvar="protein sd"
+cvar="combined mRNA and protein sd"
+sds=data.frame(statcorr[[rvar]],statcorr[[pvar]],row.names=rownames(statcorr))
+colnames(sds)=c(rvar,pvar)
+pars=lm(sds[,pvar]~sds[,rvar])$coefficients
+k=pars[2]
+m=pars[1]
+# Rotating 
+cask=cos(atan(k))
+sask=atan(k)
+R=matrix(data=c(cask,-sask,sask,cask),nrow=2,ncol=2)
+if(showOldErrorneousVersion == TRUE){
+  R=matrix(data=c(cask,-k,k,cask),nrow=2,ncol=2)
+  }
+sds[[cvar]]=t(R%*%t(sds-m))[,1]
+sds$gene=rownames(sds)
+
+# find quantiles
+qlimits=as.vector(quantile(sds[[cvar]],probs=seq(0,1,0.25)))
+# back-transform quantiles to original x-axis
+plimits=t(t(R)%*%t(matrix(c(qlimits,rep(0,length(qlimits))),ncol=2)))[,1]
+# kn is the angle of the normal to the regression line and mn holds the intercepts for the lines at the quantile points
+kn=-1/k
+mn=(k+1/k)*plimits[2:4]+m
+# convenience functions for the normals at the quantiles and the regression line itself
+ n1=function(x,kn,mn){
+   return(kn*x+mn[1])
+ }
+ n2=function(x,kn,mn){
+   return(kn*x+mn[2])
+ }
+ n3=function(x,kn,mn){
+   return(kn*x+mn[3])
+ }
+ t1=function(x,k,m){
+   return(k*x+m)
+ }
+
+ # Create a dataframe with rotated sds and correlations
+ corrxp = join(sds,corr_genes, by="gene", type="inner")
+ rownames(corrxp) = corrxp$gene
+```
+```{r,figii}
+ # pl will hold the raw and transformed scatterplots
+ pl=list()
+ i=0
+ for(var in c(rvar,pvar,cvar)){
+   # First untransformd plot
+   i=i+1
+   pl[[i]]=scatterplot(corrxp,var,"correlations", hadjust=-0.2)+
+     scale_x_continuous(sub("sd","SD",var))+
+     scale_y_continuous("mRNA-protein correlation")
+ }
+ for(var in c(rvar,pvar,cvar)){
+   i=i+1
+   pl[[i]]=binsatplot(corrxp,var,"correlations")+
+     scale_x_continuous(sub("sd","SD",var))+
+     scale_y_continuous("saturation-transformed\nmRNA-protein correlation")
+ }
+ 
+ # Plot prote sd vs mran sd, with regression line and quantils indicated
+ p4=scatterplot(sds,rvar,pvar,hadjust=-0.12)+
+   coord_fixed()+
+   scale_x_continuous(sub("sd","SD",rvar),limits=c(0,NA))+
+   scale_y_continuous(sub("sd","SD",pvar),limits=c(0,NA))+
+   stat_function(fun=n1, args=list(kn,mn))+
+   stat_function(fun=n2, args=list(kn,mn))+
+   stat_function(fun=n3, args=list(kn,mn))+
+   stat_function(fun=t1, args=list(k,m))
+
+ 
+ # Plot of correlation vs quantiles  
+ # glimits=list()
+ groupcorr = data.frame(group=paste( "all"), value=statcorr$correlations)
+ for(i in seq(2,length(qlimits))){ 
+   tmpgenes=rownames(sds[sds[cvar]>=qlimits[i-1] & sds[cvar]<=qlimits[i],])
+   tmp=data.frame(group=paste("Q",i-1),value=statcorr$correlations[rownames(corr_genes) %in% tmpgenes])
+   groupcorr=rbind(groupcorr, tmp)
+   # glimits[[i-1]]=tmpgenes
+ }
+ p5=bxplot(groupcorr, group,value)+
+   scale_x_discrete("Quantile")+
+   scale_y_continuous("mRNA-protein correlation")+
+   ggtitle(paste("Protein-mRNA",corr_label,"of genes \nover tumours,sorted by quantiles \ndefined on the regression line \nof protein and mRNA",var))
+
+lay <- rbind(c(1,1,2,2,3,3),
+             c(4,4,4,5,5,5)
+             )
+blank <- grid.rect(gp=gpar(col="white"))
+#grid.arrange(plot1,layout_matrix=lay)
+grid.arrange(pl[[1]]+ggtitle("A"),pl[[2]]+ggtitle("B"),pl[[3]]+ggtitle("C"),p4+ggtitle("D"),p5+ggtitle("E"),layout_matrix=lay)
+```
+
+Saved fig as "Lehtio_ii.pdf"
+
+```{r,figiipdf,results="hide"}
+pdf(file=paste(outdir,"Lehtio_ii.pdf",sep="/"))
+grid.arrange(pl[[1]]+ggtitle("A"),pl[[2]]+ggtitle("B"),pl[[3]]+ggtitle("C"),p4+ggtitle("D"),p5+ggtitle("E"),layout_matrix=lay)
+dev.off()
+```
+
+Saved quantile correlations to file Lehtio_iiE_quantilecorrelations.txt
+
+```{r,figiiEsave}
+
+  write.table(groupcorr[groupcorr$group!="All",],paste(outdir,"Lehtio_iiE_quantilecorrelations.txt",sep="/"),sep="\t", row.names=FALSE)
+```
+
+# iii) Supplementary figure
+
+A) saturation-transformed mRNA-protein Spearman correlation vs mRNA SD.
+B) saturation-transformed mRNA-protein Spearman correlation vs protein SD.
+C) saturation-transformed mRNA-protein Spearman correlation vs combined mRNA-protein SD.
+
+mRNA-protein Spearman correlation, y, is transformed into sat(y) by sat(y) = y/(1.0-y), where 1.0 represents the saturation value. Colors indicate density of points. The regression line sat(y)~bx+c, where x is the SD-variable studied, is indicated. Individual points are binned into square bins of the coordinate system;colors indicate density of points in each bin.
+
+```{r, figiii}
+if(showOldErrorneousVersion == TRUE){
+  print("NB! This is the old (pre 160901) and erroneous version of this plot, using a faulty rotation matrix")
+}
+lay <- rbind(c(1,2,3))
+grid.arrange(pl[[4]]+ggtitle("A"),pl[[5]]+ggtitle("B"),pl[[6]]+ggtitle("C"),layout_matrix=lay,respect=TRUE)
+```
+
+Saved fig as "Lehtio_iii.pdf"
+
+```{r,figiiipdf,results="hide"}
+pdf(file=paste(outdir,"Lehtio_iii.pdf",sep="/"))
+grid.arrange(pl[[4]]+ggtitle("A"),pl[[5]]+ggtitle("B"),pl[[6]]+ggtitle("C"),layout_matrix=lay,respect=TRUE)
+dev.off()
+
+```
+
+
+# iv) Supplementary Figure.
+
+Distribution of selected protein groups in scatterplots of saturation-transformed Spearman correlation vs combined mRNA-protein SD.
+A) PAM50
+B) Mammaprint (Tian_2010)
+C) Protein targets of_FDA appr. Drugs
+D) Ribosomal.
+
+mRNA-protein Spearman correlation, y, is transformed into sat(y) by sat(y) = y/(1.0-y), where 1.0 represents the saturation value.
+Black dots indicate the specified protein group, while red dots represent all other proteins.  The regression line sat(y)~bx+c, where x is the combined mRNA-protein SD, is indicated.
+
+```{r, proteingroups, eval=TRUE}
+if(showOldErrorneousVersion == TRUE){
+  print("NB! This is the old (pre 160901) and erroneous version of this plot, using a faulty rotation matrix")
+}
+cvar="combined mRNA and protein sd"
+myvars=c("combined mRNA and protein sd","mRNA sd","protein sd")
+
+priorPosterior=list(
+  Prior=c("Oncotype_DX",
+          "Mammaprint_(Tian_2010)",
+          "PAM50",
+          "Protein_targets_of_FDA_appr._Drugs",
+          "Ribosomal",
+          "Spliceosome",
+          "Transcription_factors",
+          "Transporters"),
+  Posterior=c("KEGG_RNA_polymerase",
+              "KEGG_Ribosome",
+              "KEGG_Oxidative_phosphorylation",
+              "KEGG_Spliceosome",
+              "KEGG_Tryptophan_metabolism",
+              "KEGG_Valine,_leucine_and_isoleucine_degradation",
+              "KEGG_Fatty_acid_metabolism",
+              "KEGG_Steroid_hormone_biosynthesis",
+              "Hallmark_oxidative_phosphorylation",
+              "Hallmark_estrogen_response_early",
+              "Hallmark_estrogen_response_late",
+              "Hallmark_interferon_gamma_response",
+              "Hallmark_G2M_checkpoint",
+              "Hallmark_interferon_alpha_response",
+              "Hallmark_E2F_targets",
+              "Hallmark_MTORC1_signaling")
+)
+pmetas=list() # Store the residual comparison results for both prior and posterior groups
+pl=list() # Store plots for selected metas
+for(p in c("Prior","Posterior")){
+  #pmeta = data.frame(name=names(exprdata$metagene))
+  pmeta = data.frame(name=priorPosterior[p])
+  colnames(pmeta)=c("name")
+  
+  rownames(pmeta) = gsub(" ","_", pmeta$name)
+  # fill in mean correlation for each meta group
+  for(meta in rownames(pmeta)){
+    pmeta[meta,"meancorr"]=mean(corrxp$correlations[rownames(corrxp) %in% exprdata$metagene[[meta]]])
+  }
+  
+  k=0 
+  for(var in myvars){
+    # var="combined mRNA and protein sd"
+    regcorrxp=lm(satf(corrxp[,"correlations"])~corrxp[,var])
+    corrxp$residuals=regcorrxp$residuals
+    kvals=vector()
+    if(var==cvar & p == "Prior"){
+      for(meta in c("PAM50","Mammaprint_(Tian_2010)","Protein_targets_of_FDA_appr._Drugs","Ribosomal")){
+        k=k+1
+        pl[[k]]=groupsatplot(corrxp,cvar,"correlations",meta)+
+          scale_x_continuous(sub("sd","SD",cvar))+
+          scale_y_continuous("saturation-transformed\nmRNA-protein correlation")
+      }
+    }  
+    for(meta in rownames(pmeta)){
+      metacorr=corrxp$residuals[rownames(corrxp) %in% exprdata$metagene[[meta]]]
+      direction = "greater"
+      pmeta[meta,paste("meanres",var)] = mean(metacorr)
+      if(pmeta[meta,paste("meanres",var)]<0){
+        direction="less"
+      }
+      other=corrxp$residuals[!(rownames(corrxp) %in% exprdata$metagene[[meta]])]
+      metacorr=wilcox.test(metacorr, other,alternative=as.vector(pmeta[meta,"direction"]))
+      pmeta[meta,paste("pval",var)] = p.adjust(metacorr$p.value,method="BH")#,n=3*4)
+      pmeta[meta,paste("fpval",var)] = sprintf("%.4g",metacorr$p.value)
+      pmeta[meta,paste("wilcoxparam",var)] = metacorr$statistic
+    }
+  }
+  pmetas[[p]]=pmeta
+}  
+```
+```{r,figiv}
+lay <- rbind(c(1,2),
+             c(3,4))
+grid.arrange(pl[[1]]+ggtitle("A"),pl[[2]]+ggtitle("B"),pl[[3]]+ggtitle("C"),pl[[4]]+ggtitle("D"),layout_matrix=lay,respect=TRUE)
+  ```
+  
+Saved fig as "Lehtio_iv.pdf"
+
+```{r,figivpdf,results="hide"}
+pdf(file=paste(outdir,"Lehtio_iv.pdf",sep="/"))
+grid.arrange(pl[[1]]+ggtitle("A"),pl[[2]]+ggtitle("B"),pl[[3]]+ggtitle("C"),pl[[4]]+ggtitle("D"),layout_matrix=lay,respect=TRUE)
+dev.off()
+```
+
+# v) Supplementary table
+
+One-sided Wilcoxon rank sum test for difference in residual distribution between specified protein group and all other proteins for the regression sat(y)~bx+c, where y = mRNA-protein Spearman correlation and x = mRNA SD, protein SD, or combined mRNA-protein SD, respectively. Direction of test is  given by the sign of the mean residual column and each p-value is Benjamini-Hochberg-corrected for multiple testing within each x.
+
+The test is used in two independent analyses:
+A) A priori-defined protein groups (defined by Henrik and Janne)
+B) A posteriori-defined protein groups that display significant enrichment for high RNA-protein correlation (defined by Henrik).
+
+Comment: BH multiple testing is done for the number of tests within each "p-value column". Reviewers could argue that it should be done for the total number of tests. Do you want me to do this already now? The significances should not change much.
+
+```{r, figv,eval=TRUE}
+if(showOldErrorneousVersion == TRUE){
+  print("NB! This is the old (pre 160901) and erroneous version of this plot, using a faulty rotation matrix")
+}
+meta4output = pmetas[["Prior"]][, c("name","meancorr",apply(expand.grid(c("fpval","meanres"),myvars), 1, function(x) paste(x[1],x[2], sep=" ")))]
+names(meta4output) = c("Protein group","Mean Spearman correlation",apply(expand.grid(c("Pvalue","Mean residual saturation-transformed correlation"),gsub("sd","SD",myvars)), 1, function(x) paste(x[2],x[1], sep="                                      ")))
+kable(meta4output, align="l",row.names=FALSE, caption = "A) A priori-defined proteing groups")
+
+meta4output = pmetas[["Posterior"]][, c("name","meancorr",apply(expand.grid(c("fpval","meanres"),myvars), 1, function(x) paste(x[1],x[2], sep=" ")))]
+names(meta4output) = c("Protein group","Mean Spearman correlation",apply(expand.grid(c("Pvalue","Mean residual saturation-transformed correlation"),gsub("sd","SD",myvars)), 1, function(x) paste(x[2],x[1], sep="                                      ")))
+kable(meta4output, align="l",row.names=FALSE, caption="B) A posteriori-defined proteing groups")
+```
+
+Save Tables as "Lehtio_v_Prior.XLSX" and "Lehtio_v_Posterior.XLSX", respectively
+
+```{r, figvtable,results="hide"}
+for(p in c("Prior", "Posterior")){
+  priormetas = pmetas[[p]]
+  names(meta4output) = c("Protein group","Mean Spearman correlation",apply(expand.grid(c("Pvalue","Mean residual saturation-transformed correlation"),myvars), 1, function(x) paste(x[2],x[1])))
+  WriteXLS(meta4output, ExcelFileName=paste(outdir,paste("Lehtio_v_",p,".XLSX",sep=""),sep="/"),)
+}
+```
+
+# vi) Distribution-defined meta groups of genes
+Based on the Spearman correlation vs. combined mRNA-protein regression, we define 5 different metagroups of genes. We use the 1/3 and 2/3 quantiles along the regression line and  additionally divide the two higher quantile groups by the sign of their residuals.
+
+```{r,metagroupsfromplot}
+if(showOldErrorneousVersion == TRUE){
+  print("NB! This is the old (pre 160901) and erroneous version of this plot, using a faulty rotation matrix")
+}
+
+cvar="combined mRNA and protein sd"
+regcorrxp=lm(satf(corrxp[,"correlations"])~corrxp[,cvar])
+corrxp$residuals=regcorrxp$residuals
+tmp=data.frame(corrxp[[cvar]],corrxp[["correlations"]],row.names=rownames(statcorr))
+colnames(tmp)=c(cvar,"correlations")
+pars=lm(tmp[,"correlations"]~tmp[,cvar])$coefficients
+k=pars[2]
+m=pars[1]
+# Rotating 
+cask=cos(atan(k))
+sask=sin(atan(k))
+R=matrix(data=c(cask,-sask,sask,cask),nrow=2,ncol=2)
+if(showOldErrorneousVersion == TRUE){
+  R=matrix(data=c(cask,-k,k,cask),nrow=2,ncol=2)
+}
+corrxp$rot=t(R%*%t(tmp-m))[,1]
+# find quantiles
+qlimits=as.vector(quantile(corrxp$rot,probs=seq(0,1,0.33333333333)))
+# Create meta groups
+
+corrxp$meta=1
+for(i in c(1,2)){
+  corrxp$meta[corrxp$rot > qlimits[i+1] & corrxp$residuals <= 0] = 2*i
+  corrxp$meta[corrxp$rot > qlimits[i+1] & corrxp$residuals > 0] = 2*i+1
+}
+```
+
+This is the plot with the meta-groups indicated
+
+```{r,figvi}
+metasatplot(corrxp,cvar,"correlations",meta)+
+  scale_x_continuous(sub("sd","SD",cvar))+
+  scale_y_continuous("saturation-transformed\nmRNA-protein correlation")+
+  scale_color_discrete(name="Metagroup")+
+  theme(legend.justification=c(1,0),legend.position=c(0.15,0.75), legend.key.size=unit(6,"pt"),legend.text=element_text(size=6))
+```
+
+Saved fig as "Lehtio_vi.pdf"
+
+```{r,figvipdf,results="hide"}
+pdf(file=paste(outdir,"Lehtio_vi.pdf",sep="/"))
+metasatplot(corrxp,cvar,"correlations",meta)+
+  scale_x_continuous(cvar)+
+  scale_y_continuous("saturation-transformed\nmRNA-protein correlgroupation")+
+  scale_color_discrete(name="Metagroup")+
+  theme(legend.justification=c(1,0),legend.position=c(0.15,0.75), legend.key.size=unit(6, "pt"),legend.text=element_text(size=6))
+dev.off()
+```
+
+# vii) Supplementary GO 
+Lastly write the gene symbols in the corresponding distribution-defined meta groups, created above, to files 'list4GO.*meta*.target.txt' (where *meta* is 'metagroup1', metagroup2', .metagroup3', 'metagroup4', 'metagroup5'), and correspondingly, for each metagroup, write the gene symbols not included in the group to 'list4GO.*meta*.background.txt'. These should be used for a gene ontology enrichment analysis (e.g., for GOrilla, upload them as the target and background files). Additionally the file 'list4GO.all.txt' contains all gene symbols.
+
+```{r,figvii,results="hide"}
+
+mymetas = c(1,2,3,4,5)
+for(meta in mymetas){
+  write(corrxp$gene[corrxp$meta==meta],file=paste(outdir,paste("list4GO.metagroup",meta,".target.txt",sep=""),sep="/"),ncolumns=1)
+  write(corrxp$gene[corrxp$meta!=meta],file=paste(outdir,paste("list4GO.metagroup",meta,".background.txt",sep=""),sep="/"),ncolumns=1)
+}
+# make a list with all as well
+write(corrxp$gene,file=paste(outdir,"list4GO.all.txt",sep="/"),ncolumns=1)
+# lapply(tl, write, paste(outdir,"list4GO.txt",sep="/"), append=TRUE, ncolumns=1)
+```
+
+# viii) Supplementary plot
+Distribution of mRNA-protein Spearman correlation over tumours.For each tumour, the correlations are computed across genes:
+A) Correlations based on all genes
+B) Correlations based on only the 300 genes with showing the highest mRNA-protein correlation across tumours.
+Tumours are ordered according to their mRNA-protein correlation and are colour-labeled by their PAM50 classification. The horizontal bar shows the mean mRNA-protein correlation over tumours.
+
+```{r, figviii, eval=TRUE}
+
+# for TUMOURS
+# tumours ordered by correlation value, and labeled by PAM50 type 
+p1=tumourplot(corr_tumour,x="tumour", y="correlations", fill="PAM50")+
+  scale_x_discrete("Tumour sample")+
+  scale_y_continuous("mRNA-protein correlation")
+  
+
+# tumours ordered by correlation value, and labeled by PAM50 type 
+p2=tumourplot(corr_tumour,x="tumour", y="Best300.correlations", fill="PAM50")+
+  scale_x_discrete("Tumour sample")+
+  scale_y_continuous("mRNA-protein correlation")
+
+lay <- rbind(c(1,2))
+grid.arrange(p1+ggtitle("A"),p2+ggtitle("B"),layout_matrix=lay,respect=TRUE)
+```
+
+Saved fig as "Lehtio_viii.pdf"
+
+```{r,figviiipdf,results="hide"}
+pdf(file=paste(outdir,"Lehtio_viii.pdf",sep="/"))
+grid.arrange(p1+ggtitle("A"),p2+ggtitle("B"),layout_matrix=lay,respect=TRUE)
+dev.off()
+```
