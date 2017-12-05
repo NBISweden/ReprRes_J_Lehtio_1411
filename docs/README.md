@@ -8,9 +8,8 @@ during 2015-2017 (NBIS LT project name: j_lehtio_1411)
 
 As a part of the NBIS reproducible research policy, this repository
 provides the data-files and R-scripts necessary to perform the
-underlying analyses and create the tables and plots present in the
-manuscript *Johansson et al. Breast cancer quantitative proteome and
-proteogenomic landscape*.
+underlying analyses and create tables and plots ued in *Johansson et al. Breast cancer quantitative proteome and
+proteogenomic landscape* (manuscript in prep; link not yet available)
 
 More specifically, the script __FinalFigures.Rmd__ reproduces parts of
 Main text figure 5, and Supplementary figure S5 and Suppementary Table
@@ -23,11 +22,12 @@ S3 (as well as some additional figures not used in the manuscript).
 
 The content of this repository can be obtained in two ways:
 
-* Download the current release as a zip- or tar-archive (e.g., by clicking `Download
-  Zip File` or `Download TAR Ball` on the `github.io` page)
+* Download the current release as a zip- or tar-archive (e.g., by
+  clicking `Download Zip File` or `Download TAR Ball` on the
+  `github.io` page)
 
-* Clone the repository from the github page (reached from the `github.io` page  by clicking `View
-  the Project on GitHub`)
+* Clone the repository from the github page (reached from the
+  `github.io` page by clicking `View on GitHub`)
 
 #### Running the scripts
 
