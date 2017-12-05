@@ -23,23 +23,24 @@ S3 (as well as some additional figures not used in the manuscript).
 
 The content of this repository can be obtained in two ways:
 
-* Download the current release as a zip-archive by clicking [download zip]()
+* Download the current release as a zip- or tar-archive (e.g., by clicking `Download
+  Zip File` or `Download TAR Ball` on the `github.io` page)
 
-* Clone the repository from the github page (reached by clicking [View
-  the Project on GitHub](https://github.com/NBISweden/j_lehtio_1411))
+* Clone the repository from the github page (reached from the `github.io` page  by clicking `View
+  the Project on GitHub`)
 
 #### Running the scripts
 
 The easiest way of running the script is to open __FinalFigures.Rmd__ in Rstudio and
 press the knitr button.
 
-Alternatively, the following command can be issued inside a
+Alternatively, the following commands can be issued inside a
 R-environment (command-line or script):
 
 
-`require(rmarkdown)`
- 
-`render('FinalFigures.Rmd', output_format='html_document', output_file='FinalFigures.html')`
+>`require(rmarkdown)`
+>
+>`render('FinalFigures.Rmd', output_format='html_document', output_file='FinalFigures.html')`
 
 *Note: it seems like this alternative requires (at least) pandoc to
  be installed (e.g., using [macports](https://www.macports.org)).*
@@ -54,12 +55,12 @@ operative systems (scripts were developed on MacOSX).
 * __README.md__
 This file.
 
-##### Folders
+#### Folders
 
 * __Data/__ Directory holding the data provided by the Lehtiö group.
 See further README.Rmd in that folder.
 
-##### Main R-files
+#### Main R-file
 The two .RMD documents perform the main analyses in this repository.
 They double as the main documentation tool:
 
@@ -67,7 +68,8 @@ They double as the main documentation tool:
 R markdown document for manuscript figures relating to analysis of
 correlation between protein expression and mRNA expression.
 
-##### Helper R-files
+#### Helper R-files
+These are called by the main R-file
 
 * __Helper.R__
 Helper R-script defining useful convenience fuctions
@@ -80,7 +82,7 @@ later use in .Rmd-files.
 * __updating_gene_symbols.R__
 Fixing some gene symbol errors in mRNA data
 
-##### Miscellaneous files
+#### Miscellaneous files
 
 * __GRCh37_chromLengths_NCBI.txt__
 Chromosome lengths copied from http://www.ncbi.nlm.nih.gov/projects/genome/assembly/grc/human/data/?build=37
