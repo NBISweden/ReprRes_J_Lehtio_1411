@@ -13,7 +13,7 @@ First load required libraries and some convenient helper functions; set director
 
 ```{r libs, results="hide", eval=TRUE}
 source(file="Helper.R", echo=FALSE, verbose=FALSE)
-libs=c("abind","ggplot2","gridExtra","R.utils","plyr","knitr","WriteXLS")
+libs=c("abind","ggplot2","gridExtra","R.utils","plyr","knitr","WriteXLS", "tibble","gridGraphics") # NB! I have noted that gridGraphics might require (re)installation of ImageMagick:( (issue was on Mac after install of MacosX 10.13
 checklibs(libs)
 
 indir="R-files/"
@@ -150,8 +150,8 @@ Load the R-object containing data (construct it if it does not exist).
 # Create infile if needed
 if(!file.exists(paste(indir,"tumourExpressionData", sep="/"))){
   source(file="formatData.R")
-  indir="R-files/"
-  outdir="Output/"
+  #indir="R-files/"
+  #outdir="Output/"
 }
 # load expression working data as an R object called exprdata
 load(paste(indir,"tumourExpressionData",sep="/"))
@@ -291,9 +291,9 @@ groupcorr = data.frame(group="All", value=corr_genes$correlations)
 coord=1.0
 # pvals=data.frame(group="All", value=coord, p=1)
 for(g in sel_metagroups){
-  tmpgenes=intersect(genes,exprdata$metagene[[g]])
-  g=gsub("_"," ",g)
-  tmp=data.frame(group=g, value=corr_genes$correlations[rownames(corr_genes) %in% tmpgenes])
+  tmpgenes=intersect(genes,unlist(exprdata$metagene[[g]]))
+  g1=gsub("_"," ",g)
+  tmp=data.frame(group=g1, value=corr_genes$correlations[rownames(corr_genes) %in% tmpgenes])
   groupcorr=rbind(groupcorr, tmp)
   # p=data.frame(group=g,value=coord,p=wilcox.test(corr_genes$correlations[rownames(corr_genes) %in% tmpgenes],corr_genes$correlations)$p.value)
   # pvals=rbind(pvals,p)
@@ -585,7 +585,7 @@ for(p in c("Prior","Posterior")){
   rownames(pmeta) = gsub(" ","_", pmeta$name)
   # fill in mean correlation for each meta group
   for(meta in rownames(pmeta)){
-    pmeta[meta,"meancorr"]=mean(corrxp$correlations[rownames(corrxp) %in% exprdata$metagene[[meta]]])
+    pmeta[meta,"meancorr"]=mean(corrxp$correlations[rownames(corrxp) %in% unlist(exprdata$metagene[[meta]])])
   }
   
   k=0 

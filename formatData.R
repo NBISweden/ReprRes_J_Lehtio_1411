@@ -8,7 +8,7 @@ if(length(toinstall) > 0){
 }
 lapply(libs, library, character.only = TRUE)
 
-indir="DATA/"
+indir="Data/"
 outdir="./R-files/"
 dir.create(outdir, showWarnings=FALSE)
 
@@ -50,17 +50,17 @@ readArrayFromExcel = function(file, cols.to.remove=c(), row.name.col=c(), sheet=
 
 readListFromExcel = function(file, sheet=1){
   library(readxl)
-  raw = read_excel(file,sheet=sheet, col_names = TRUE)
+  raw = as.data.frame(read_excel(file,sheet=sheet, col_names = TRUE))
   ret = list()
   for(key in names(raw)){
     tmp=as.vector(raw[key])
-    ret[[key]]=tmp[!is.na(tmp)]
+    ret[[key]]=tmp[!is.na(tmp),]
   }
   return(ret)
 }
 
-
-
+setwd("/Users/bengts/WABI/Lehtio/j_lehtio_1411")
+getwd()
 
 # PROTEIN DATA
 ##############
@@ -129,6 +129,7 @@ for(i in seq(1,3)){
   meta_genes = c(meta_genes,readListFromExcel(paste(indir,"Genelists-summary160606.xlsx",sep="/"), sheet=i))
   print(length(meta_genes))
 }
+print(length(meta_genes))
 # Add Henrik's last list
 meta_genes = c(meta_genes,readListFromExcel(paste(indir,"KEGG_n_Hallmark_genes_for_mRNA-protein_corr.xlsx",sep="/"), sheet=1))
 print(length(meta_genes))
@@ -182,3 +183,4 @@ exprdata=list(name="Tumour expressionData",
               metagene=meta_genes) #, cnv=cnv) 
 # Save the list for later access
 save(exprdata,file=paste(outdir,"tumourExpressionData",sep="/"))
+
