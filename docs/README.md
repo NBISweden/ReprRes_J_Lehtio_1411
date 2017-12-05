@@ -35,7 +35,7 @@ The easiest way of running the script is to open __FinalFigures.Rmd__ in Rstudio
 press the knitr button.
 
 Alternatively, the following commands can be issued inside a
-R-environment (command-line or script):
+R-environment (command-line or script) in the downloaded directory:
 
 
 > `require(rmarkdown)`
