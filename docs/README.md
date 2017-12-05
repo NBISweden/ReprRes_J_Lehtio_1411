@@ -37,10 +37,10 @@ press the knitr button.
 Alternatively, the following commands can be issued inside a
 R-environment (command-line or script) in the downloaded directory:
 
-
-> `require(rmarkdown)`
->
-> `render('FinalFigures.Rmd')`
+```
+require(rmarkdown)
+render('FinalFigures.Rmd')
+```
 
 *Note: it seems like this alternative requires (at least) pandoc to
  be installed (e.g., using [macports](https://www.macports.org)).*
