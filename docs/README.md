@@ -49,6 +49,14 @@ The script are designed to install required R-packages as needed;
 however, this feature has not been tested extensively on different
 operative systems (scripts were developed on MacOSX).
 
+## Contact
+
+* Janne Lehtio group, KI:
+  * [Henrik Johansson](mailto:henrik.johansson@ki.se) 
+  * [Janne  Lehtiö](mailto:janne.lehtio@ki.se) 
+
+* Janne Lehtio group, KINBIS long-term suport:
+  * [Bengt Sennblad](mailto:bengt.sennblad@scilifelab.se.se) 
 
 ## Repository content:
 
