@@ -38,9 +38,9 @@ Alternatively, the following commands can be issued inside a
 R-environment (command-line or script):
 
 
->`require(rmarkdown)`
+> `require(rmarkdown)`
 >
->`render('FinalFigures.Rmd', output_format='html_document', output_file='FinalFigures.html')`
+> `render('FinalFigures.Rmd')`
 
 *Note: it seems like this alternative requires (at least) pandoc to
  be installed (e.g., using [macports](https://www.macports.org)).*
