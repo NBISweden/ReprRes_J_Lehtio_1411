@@ -4,7 +4,7 @@ This is a collaborative project between the [Janne Lehtiö
 group](http://ki.se/en/onkpat/janne-lehtios-group), Department of
 Oncology-Pathology, Karolinska Institutet and the
 [NBIS](http://nbis.se) long-term support (a.k.a. WABI), performed
-during 2015-17 (NBIS LT project name: j_lehtio_1411)
+during 2015-2017 (NBIS LT project name: j_lehtio_1411)
 
 As a part of the NBIS reproducible research policy, this repository
 provides the data-files and R-scripts necessary to perform the
@@ -49,15 +49,6 @@ The script are designed to install required R-packages as needed;
 however, this feature has not been tested extensively on different
 operative systems (scripts were developed on MacOSX).
 
-## Contact
-
-* Janne Lehtio group, KI:
-  * [Henrik Johansson](mailto:henrik.johansson@ki.se) 
-  * [Janne  Lehtiö](mailto:janne.lehtio@ki.se) 
-
-* Janne Lehtio group, KINBIS long-term suport:
-  * [Bengt Sennblad](mailto:bengt.sennblad@scilifelab.se.se) 
-
 ## Repository content:
 
 * __README.md__
@@ -66,7 +57,7 @@ This file.
 #### Folders
 
 * __Data/__ Directory holding the data provided by the Lehtiö group.
-See further README.Rmd in that folder.
+See further README.md in that folder.
 
 #### Main R-file
 The two .RMD documents perform the main analyses in this repository.
@@ -94,3 +85,13 @@ Fixing some gene symbol errors in mRNA data
 
 * __GRCh37_chromLengths_NCBI.txt__
 Chromosome lengths copied from http://www.ncbi.nlm.nih.gov/projects/genome/assembly/grc/human/data/?build=37
+
+## Contact
+
+* Janne Lehtio group, KI:
+  * [Henrik Johansson](mailto:henrik.johansson@ki.se) 
+  * [Janne  Lehtiö](mailto:janne.lehtio@ki.se) 
+
+* Janne Lehtio group, KINBIS long-term suport:
+  * [Bengt Sennblad](mailto:bengt.sennblad@scilifelab.se.se) 
+
