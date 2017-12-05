@@ -21,8 +21,8 @@ Alternatively, the following command can be issued inside a
 R-environment (command-line or script):
 requires that Pandoc is installed):
 
- -require(rmarkdown)
- -render('FinalFigures.Rmd', output_format='html_document', output_file='FinalFigures.html')
+ >require(rmarkdown)
+ >render('FinalFigures.Rmd', output_format='html_document', output_file='FinalFigures.html')
 
 *(Note: it seems like this alternative requires, at least, pandoc to
  be installed)*
