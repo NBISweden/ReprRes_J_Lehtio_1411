@@ -7,13 +7,29 @@ perform analyses and create the tables and plots for the manuscript
 *Johansson et al. Breast cancer quantitative proteome and
 proteogenomic landscape*.
 
-More specifically, the script __FinalFigures.Rmd__ Main text figure
-5a-b, and Supplementary figure S5 and Suppementary Table S3.
+More specifically, the script __FinalFigures.Rmd__ produces parts of
+Main text figure 5, and Supplementary figure S5 and Suppementary Table
+S3.
 
 
 ## Usage
-The easiest way of 
 
+The easiest way of running the script is to open them in Rstudio and
+press the knitr button.
+
+Alternatively, the following command can be issued inside a
+R-environment (command-line or script):
+requires that Pandoc is installed):
+
+ -require(rmarkdown)
+ -render('FinalFigures.Rmd', output_format='html_document', output_file='FinalFigures.html')
+
+*(Note: it seems like this alternative requires, at least, pandoc to
+ be installed)*
+
+The script are designed to install required packages if needed;
+however, this feature has not been tested extensively on different
+operative systems (scripts are developed on MacOSX).
 
 
 ## Repository content:
