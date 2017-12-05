@@ -1,35 +1,52 @@
-# j_lehtio_1411
+# Breast cancer quantitative proteome and proteogenomic landscape -- supplementary data and software
 
-Repository for NBIS LT project j_lehtio_1411 with Janne Lehtiö group 2015-17
+This is a collaborative project between the [Janne Lehtiö
+group](http://ki.se/en/onkpat/janne-lehtios-group), Department of
+Oncology-Pathology, Karolinska Institutet and the
+[NBIS](http://nbis.se) long-term support (a.k.a. WABI), performed
+during 2015-17 (NBIS LT project name: j_lehtio_1411)
 
-This repository provides the data-files and R-scripts necessary to
-perform analyses and create the tables and plots for the manuscript
-*Johansson et al. Breast cancer quantitative proteome and
+As a part of the NBIS reproducible research policy, this repository
+provides the data-files and R-scripts necessary to perform the
+underlying analyses and create the tables and plots present in the
+manuscript *Johansson et al. Breast cancer quantitative proteome and
 proteogenomic landscape*.
 
-More specifically, the script __FinalFigures.Rmd__ produces parts of
+More specifically, the script __FinalFigures.Rmd__ reproduces parts of
 Main text figure 5, and Supplementary figure S5 and Suppementary Table
-S3.
+S3 (as well as some additional figures not used in the manuscript).
 
 
 ## Usage
 
-The easiest way of running the script is to open them in Rstudio and
+#### Download
+
+The content of this repository can be obtained in two ways:
+
+* Download the current release as a zip-archive by clicking [download zip]()
+
+* Clone the repository from the github page (reached by clicking [View
+  the Project on GitHub](https://github.com/NBISweden/j_lehtio_1411))
+
+#### Running the scripts
+
+The easiest way of running the script is to open __FinalFigures.Rmd__ in Rstudio and
 press the knitr button.
 
 Alternatively, the following command can be issued inside a
 R-environment (command-line or script):
-requires that Pandoc is installed):
 
- >require(rmarkdown)
- >render('FinalFigures.Rmd', output_format='html_document', output_file='FinalFigures.html')
 
-*(Note: it seems like this alternative requires, at least, pandoc to
- be installed)*
+`require(rmarkdown)`
+ 
+`render('FinalFigures.Rmd', output_format='html_document', output_file='FinalFigures.html')`
 
-The script are designed to install required packages if needed;
+*Note: it seems like this alternative requires (at least) pandoc to
+ be installed (e.g., using [macports](https://www.macports.org)).*
+
+The script are designed to install required R-packages as needed;
 however, this feature has not been tested extensively on different
-operative systems (scripts are developed on MacOSX).
+operative systems (scripts were developed on MacOSX).
 
 
 ## Repository content:
