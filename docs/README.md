@@ -4,7 +4,7 @@ This is a collaborative project between the [Janne Lehtiö
 group](http://ki.se/en/onkpat/janne-lehtios-group), Department of
 Oncology-Pathology, Karolinska Institutet and the
 [NBIS](http://nbis.se) long-term support (a.k.a. WABI), performed
-during 2015-2017 (NBIS LT project name: j_lehtio_1411)
+during 2015-2017 (NBIS LT project name: J_Lehtio_1411)
 
 As a part of the NBIS reproducible research policy, this repository
 provides the data-files and R-scripts necessary to perform the
@@ -92,6 +92,6 @@ Chromosome lengths copied from http://www.ncbi.nlm.nih.gov/projects/genome/assem
   * [Henrik Johansson](mailto:henrik.johansson@ki.se) 
   * [Janne  Lehtiö](mailto:janne.lehtio@ki.se) 
 
-* Janne Lehtio group, KINBIS long-term suport:
-  * [Bengt Sennblad](mailto:bengt.sennblad@scilifelab.se.se) 
+* NBIS long-term support:
+  * [Bengt Sennblad](mailto:bengt.sennblad@scilifelab.se) 
 
