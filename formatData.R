@@ -8,9 +8,6 @@ if(length(toinstall) > 0){
 }
 lapply(libs, library, character.only = TRUE)
 
-log <- file("ABCDEF.log", open = "wt")
-sink(file=log,append=F, type=c("output","message"), split=T)
-print(getwd())
 indir="./Data/"
 outdir="./R-files/"
 dir.create(outdir, showWarnings=FALSE)
@@ -21,12 +18,10 @@ dir.create(outdir, showWarnings=FALSE)
 # containingtheir median values for each column
 mymedian=function(x){
   ret=data.table(x)
-  setkey(ret, GeneName)
-  print(str(ret))
-  ret=as.data.frame(ret[, lapply(.SD,median),by=GeneName])
+  #setkey(ret, GeneName)
+  ret=as.data.frame(ret[, lapply(.SD,median),by=GeneName, on=NULL])
   row.names(ret)=ret$GeneName
   ret$GeneName = NULL
-  print(str(ret))
   return(ret)
 }
 
@@ -78,7 +73,6 @@ head(prot_data, 5)
 typos=c("OSL2U.0334","OSL2U.0407","OSL2U.0030","OSL2U.0484","OSL2U.0289","OSL2U.0364","OSL2U.0429")
 newcolnames=colnames(prot_data)
 for(typo in typos){
-#  print(paste(typo,"T1",sep=""))
   newcolnames=gsub(typo,paste(typo,"T1",sep=""), newcolnames)
 }
 colnames(prot_data) = newcolnames
@@ -106,10 +100,7 @@ rna_data=rna_data[,!names(rna_data) %in% c("ProbeUID.SampleArray.gDetrendedSigna
 # replace the rows of individual probes mapping to the same genename by their median 
 # row (for each column) and finally convert to array
 head(rna_data, 5)
-print("where")
-print(nrow(rna_data))
 rna_data=convert2Array(mymedian(rna_data))
-print("here")
 
 # META DATA
 ###########
@@ -188,5 +179,4 @@ exprdata=list(name="Tumour expressionData",
               metagene=meta_genes) #, cnv=cnv) 
 # Save the list for later access
 save(exprdata,file=paste(outdir,"tumourExpressionData",sep="/"))
-sink()
 

@@ -159,13 +159,11 @@ tumourplot<-function(data,x,y,fill){
 
 Load the R-object containing data (construct it if it does not exist).
 
-```{r loaddata, eval=TRUE, debug=TRUE}
+```{r loaddata, eval=TRUE}
 # Create infile if needed
 if(!file.exists(paste(in_dir,"tumourExpressionData", sep="/"))){
-  source("formatData.R", chdir=TRUE, print.eval=T, echo=T)
+  source("formatData.R", chdir=TRUE)
 }
-```
-```{r loaddata2, eval=TRUE}
 # load expression working data as an R object called exprdata
 load(paste(in_dir,"tumourExpressionData",sep="/"))
 # Identify intersection of gene names and tumour names
