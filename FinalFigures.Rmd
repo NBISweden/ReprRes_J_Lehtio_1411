@@ -3,6 +3,8 @@ title: "FinalFigures_160901"
 author: "Bengt Sennblad"
 output: html_document
 date: "`r format(Sys.time(), '%d %B, %Y')`"
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r global_options, include=FALSE}
@@ -12,24 +14,35 @@ knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE,eval=TRUE)
 First load required libraries and some convenient helper functions; set directory for reading data
 
 ```{r libs, results="hide", eval=TRUE}
-source(file="Helper.R", echo=FALSE, verbose=FALSE)
+source(file="Helper.R", chdir=T,echo=FALSE, verbose=FALSE)
 libs=c("abind","ggplot2","gridExtra","R.utils","plyr","knitr","WriteXLS", "tibble","gridGraphics") # NB! I have noted that gridGraphics might require (re)installation of ImageMagick:( (issue was on Mac after install of MacosX 10.13
 checklibs(libs)
 
-indir="R-files/"
-outdir="FinalOutput_160901/"
+in_dir="R-files/"
+out_dir="FinalOutput_160901/"
 ## To recreate old (pre 160901) results using an erroneous rotation matrix for ii-vi, set the following variable to TRUE
 showOldErrorneousVersion = FALSE
 if(showOldErrorneousVersion == TRUE){
- outdir="FinalOutput/"
+ out_dir="FinalOutput/"
 }
-dir.create(outdir, showWarnings=FALSE)
+dir.create(out_dir, showWarnings=FALSE)
 
 #Default scatterpot point size 
 myscatterpointsize=0.5
 mybasesize = 5
 PAM50cols=c("Basal"="#E31A1C", "Her2"="#FB9A99","LumA"="#1F78B4","LumB"="#A6CEE3","Normal"="#33A02C")
 
+# Standard scatterplot of two variables
+scatterplot2<-function(data,x,y, hadjust=-0.2){
+  ret=ggplot(data,aes(x=data[,x], y=data[,y]))+
+    stat_bin2d(bins=75)+
+    scale_fill_gradientn(limits=c(0,150), breaks=seq(0, 150, by=25), colours=rainbow(4))+
+    theme_classic(base_size=8)+
+    theme(axis.line.y = element_line(colour = "black", linetype="solid", size=0.5),axis.line.x = element_line(colour = "black", linetype="solid", size=0.5))+
+    theme(plot.title = element_text(hjust=hadjust,margin = margin(l=2,r=2,t = 0, b = -5)))+
+    theme(legend.justification=c(0,1),legend.position=c(0.1,0.9),legend.title=element_blank(), legend.key.size=unit(8, "pt"),legend.text=element_text(size=5))
+  return(ret)
+}
 # Standard scatterplot of two variables
 scatterplot<-function(data,x,y, hadjust=-0.2){
   ret=ggplot(data,aes(x=data[,x], y=data[,y]))+
@@ -146,15 +159,15 @@ tumourplot<-function(data,x,y,fill){
 
 Load the R-object containing data (construct it if it does not exist).
 
-```{r loaddata, eval=TRUE}
+```{r loaddata, eval=TRUE, debug=TRUE}
 # Create infile if needed
-if(!file.exists(paste(indir,"tumourExpressionData", sep="/"))){
-  source(file="formatData.R")
-  #indir="R-files/"
-  #outdir="Output/"
+if(!file.exists(paste(in_dir,"tumourExpressionData", sep="/"))){
+  source("formatData.R", chdir=TRUE, print.eval=T, echo=T)
 }
+```
+```{r loaddata2, eval=TRUE}
 # load expression working data as an R object called exprdata
-load(paste(indir,"tumourExpressionData",sep="/"))
+load(paste(in_dir,"tumourExpressionData",sep="/"))
 # Identify intersection of gene names and tumour names
 genes=intersect(rownames(exprdata$protexpr),rownames(exprdata$rnaexpr))
 tumours=intersect(colnames(exprdata$protexpr), colnames(exprdata$rnaexpr))
@@ -196,10 +209,10 @@ corr_tumour$Row.names=NULL
 We save the the correlations as tab-delimited text files to make it available to Henrik and other users.
 
 ```{r savecorr}
-outfile=paste(outdir,paste("Lehtio.all",method,"tumour_correlationdata.txt",sep="."),sep="/")
+outfile=paste(out_dir,paste("Lehtio.all",method,"tumour_correlationdata.txt",sep="."),sep="/")
 write.table(corr_tumour,file=outfile,sep="\t", row.names=FALSE)
 
-outfile=paste(outdir,paste("Lehtio.all",method,"gene_correlationdata.txt",sep="."),sep="/")
+outfile=paste(out_dir,paste("Lehtio.all",method,"gene_correlationdata.txt",sep="."),sep="/")
 write.table(corr_genes,file=outfile,sep="\t", row.names=FALSE)
 
 ```
@@ -377,7 +390,7 @@ grid.arrange(p1,p2,blank, layout_matrix = lay, heights=unit(c(6,2.3),"cm"))
 Saved fig as "Lehtio_i.pdf"
 
 ```{r,figipdf,results="hide"}
-pdf(file=paste(outdir,"Lehtio_i.pdf",sep="/"))
+pdf(file=paste(out_dir,"Lehtio_i.pdf",sep="/"))
 grid.arrange(p1,p2,blank, layout_matrix = lay, heights=unit(c(6,2.3),"cm"))
 dev.off()
 ```
@@ -458,10 +471,10 @@ mn=(k+1/k)*plimits[2:4]+m
  }
  
  # Plot prote sd vs mran sd, with regression line and quantils indicated
- p4=scatterplot(sds,rvar,pvar,hadjust=-0.12)+
+ p4=scatterplot2(sds,rvar,pvar,hadjust=-0.12)+
    coord_fixed()+
    scale_x_continuous(sub("sd","SD",rvar),limits=c(0,NA))+
-   scale_y_continuous(sub("sd","SD",pvar),limits=c(0,NA))+
+   scale_y_continuous(sub("sd","SD",pvar),limits=c(0,3.5))+
    stat_function(fun=n1, args=list(kn,mn))+
    stat_function(fun=n2, args=list(kn,mn))+
    stat_function(fun=n3, args=list(kn,mn))+
@@ -493,7 +506,7 @@ grid.arrange(pl[[1]]+ggtitle("A"),pl[[2]]+ggtitle("B"),pl[[3]]+ggtitle("C"),p4+g
 Saved fig as "Lehtio_ii.pdf"
 
 ```{r,figiipdf,results="hide"}
-pdf(file=paste(outdir,"Lehtio_ii.pdf",sep="/"))
+pdf(file=paste(out_dir,"Lehtio_ii.pdf",sep="/"))
 grid.arrange(pl[[1]]+ggtitle("A"),pl[[2]]+ggtitle("B"),pl[[3]]+ggtitle("C"),p4+ggtitle("D"),p5+ggtitle("E"),layout_matrix=lay)
 dev.off()
 ```
@@ -502,7 +515,7 @@ Saved quantile correlations to file Lehtio_iiE_quantilecorrelations.txt
 
 ```{r,figiiEsave}
 
-  write.table(groupcorr[groupcorr$group!="All",],paste(outdir,"Lehtio_iiE_quantilecorrelations.txt",sep="/"),sep="\t", row.names=FALSE)
+  write.table(groupcorr[groupcorr$group!="All",],paste(out_dir,"Lehtio_iiE_quantilecorrelations.txt",sep="/"),sep="\t", row.names=FALSE)
 ```
 
 # iii) Supplementary figure
@@ -524,7 +537,7 @@ grid.arrange(pl[[4]]+ggtitle("A"),pl[[5]]+ggtitle("B"),pl[[6]]+ggtitle("C"),layo
 Saved fig as "Lehtio_iii.pdf"
 
 ```{r,figiiipdf,results="hide"}
-pdf(file=paste(outdir,"Lehtio_iii.pdf",sep="/"))
+pdf(file=paste(out_dir,"Lehtio_iii.pdf",sep="/"))
 grid.arrange(pl[[4]]+ggtitle("A"),pl[[5]]+ggtitle("B"),pl[[6]]+ggtitle("C"),layout_matrix=lay,respect=TRUE)
 dev.off()
 
@@ -628,7 +641,7 @@ grid.arrange(pl[[1]]+ggtitle("A"),pl[[2]]+ggtitle("B"),pl[[3]]+ggtitle("C"),pl[[
 Saved fig as "Lehtio_iv.pdf"
 
 ```{r,figivpdf,results="hide"}
-pdf(file=paste(outdir,"Lehtio_iv.pdf",sep="/"))
+pdf(file=paste(out_dir,"Lehtio_iv.pdf",sep="/"))
 grid.arrange(pl[[1]]+ggtitle("A"),pl[[2]]+ggtitle("B"),pl[[3]]+ggtitle("C"),pl[[4]]+ggtitle("D"),layout_matrix=lay,respect=TRUE)
 dev.off()
 ```
@@ -662,7 +675,7 @@ Save Tables as "Lehtio_v_Prior.XLSX" and "Lehtio_v_Posterior.XLSX", respectively
 for(p in c("Prior", "Posterior")){
   priormetas = pmetas[[p]]
   names(meta4output) = c("Protein group","Mean Spearman correlation",apply(expand.grid(c("Pvalue","Mean residual saturation-transformed correlation"),myvars), 1, function(x) paste(x[2],x[1])))
-  WriteXLS(meta4output, ExcelFileName=paste(outdir,paste("Lehtio_v_",p,".XLSX",sep=""),sep="/"),)
+  WriteXLS(meta4output, ExcelFileName=paste(out_dir,paste("Lehtio_v_",p,".XLSX",sep=""),sep="/"),)
 }
 ```
 
@@ -714,7 +727,7 @@ metasatplot(corrxp,cvar,"correlations",meta)+
 Saved fig as "Lehtio_vi.pdf"
 
 ```{r,figvipdf,results="hide"}
-pdf(file=paste(outdir,"Lehtio_vi.pdf",sep="/"))
+pdf(file=paste(out_dir,"Lehtio_vi.pdf",sep="/"))
 metasatplot(corrxp,cvar,"correlations",meta)+
   scale_x_continuous(cvar)+
   scale_y_continuous("saturation-transformed\nmRNA-protein correlgroupation")+
@@ -730,12 +743,12 @@ Lastly write the gene symbols in the corresponding distribution-defined meta gro
 
 mymetas = c(1,2,3,4,5)
 for(meta in mymetas){
-  write(corrxp$gene[corrxp$meta==meta],file=paste(outdir,paste("list4GO.metagroup",meta,".target.txt",sep=""),sep="/"),ncolumns=1)
-  write(corrxp$gene[corrxp$meta!=meta],file=paste(outdir,paste("list4GO.metagroup",meta,".background.txt",sep=""),sep="/"),ncolumns=1)
+  write(corrxp$gene[corrxp$meta==meta],file=paste(out_dir,paste("list4GO.metagroup",meta,".target.txt",sep=""),sep="/"),ncolumns=1)
+  write(corrxp$gene[corrxp$meta!=meta],file=paste(out_dir,paste("list4GO.metagroup",meta,".background.txt",sep=""),sep="/"),ncolumns=1)
 }
 # make a list with all as well
-write(corrxp$gene,file=paste(outdir,"list4GO.all.txt",sep="/"),ncolumns=1)
-# lapply(tl, write, paste(outdir,"list4GO.txt",sep="/"), append=TRUE, ncolumns=1)
+write(corrxp$gene,file=paste(out_dir,"list4GO.all.txt",sep="/"),ncolumns=1)
+# lapply(tl, write, paste(out_dir,"list4GO.txt",sep="/"), append=TRUE, ncolumns=1)
 ```
 
 # viii) Supplementary plot
@@ -765,7 +778,7 @@ grid.arrange(p1+ggtitle("A"),p2+ggtitle("B"),layout_matrix=lay,respect=TRUE)
 Saved fig as "Lehtio_viii.pdf"
 
 ```{r,figviiipdf,results="hide"}
-pdf(file=paste(outdir,"Lehtio_viii.pdf",sep="/"))
+pdf(file=paste(out_dir,"Lehtio_viii.pdf",sep="/"))
 grid.arrange(p1+ggtitle("A"),p2+ggtitle("B"),layout_matrix=lay,respect=TRUE)
 dev.off()
 ```

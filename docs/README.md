@@ -34,8 +34,10 @@ The content of this repository can be obtained in two ways:
 
 #### Running the scripts
 
-The easiest way of running the script is to open __FinalFigures.Rmd__ in Rstudio and
-press the knitr button.
+The easiest way of running the script is to open __FinalFigures.Rmd__
+in Rstudio, set the working directory (menu 'Session | Set Working
+Directory' for MacOSX or 'Tools|Change Working Dir...' else) to 'To
+Source File Location', and then press the `knit` button.
 
 Alternatively, the following commands can be issued inside a
 R-environment (command-line or script) in the downloaded directory:

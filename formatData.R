@@ -8,7 +8,10 @@ if(length(toinstall) > 0){
 }
 lapply(libs, library, character.only = TRUE)
 
-indir="Data/"
+log <- file("ABCDEF.log", open = "wt")
+sink(file=log,append=F, type=c("output","message"), split=T)
+print(getwd())
+indir="./Data/"
 outdir="./R-files/"
 dir.create(outdir, showWarnings=FALSE)
 
@@ -19,9 +22,11 @@ dir.create(outdir, showWarnings=FALSE)
 mymedian=function(x){
   ret=data.table(x)
   setkey(ret, GeneName)
+  print(str(ret))
   ret=as.data.frame(ret[, lapply(.SD,median),by=GeneName])
   row.names(ret)=ret$GeneName
   ret$GeneName = NULL
+  print(str(ret))
   return(ret)
 }
 
@@ -59,7 +64,7 @@ readListFromExcel = function(file, sheet=1){
   return(ret)
 }
 
-setwd("/Users/bengts/WABI/Lehtio/j_lehtio_1411")
+#setwd("/Users/bengts/WABI/Lehtio/j_lehtio_1411")
 getwd()
 
 # PROTEIN DATA
@@ -73,7 +78,7 @@ head(prot_data, 5)
 typos=c("OSL2U.0334","OSL2U.0407","OSL2U.0030","OSL2U.0484","OSL2U.0289","OSL2U.0364","OSL2U.0429")
 newcolnames=colnames(prot_data)
 for(typo in typos){
-  print(paste(typo,"T1",sep=""))
+#  print(paste(typo,"T1",sep=""))
   newcolnames=gsub(typo,paste(typo,"T1",sep=""), newcolnames)
 }
 colnames(prot_data) = newcolnames
@@ -100,7 +105,11 @@ rna_data$OSL2U.0219T1 = NULL
 rna_data=rna_data[,!names(rna_data) %in% c("ProbeUID.SampleArray.gDetrendedSignal","ProbeName","SystematicName","chrom","seq_beg","seq_end","accessions")]
 # replace the rows of individual probes mapping to the same genename by their median 
 # row (for each column) and finally convert to array
+head(rna_data, 5)
+print("where")
+print(nrow(rna_data))
 rna_data=convert2Array(mymedian(rna_data))
+print("here")
 
 # META DATA
 ###########
@@ -124,15 +133,11 @@ rownames(meta_tumours) = newrownames
 # head(pam50, 5)
 
 meta_genes = list()
-print(length(meta_genes))
 for(i in seq(1,3)){
   meta_genes = c(meta_genes,readListFromExcel(paste(indir,"Genelists-summary160606.xlsx",sep="/"), sheet=i))
-  print(length(meta_genes))
 }
-print(length(meta_genes))
 # Add Henrik's last list
 meta_genes = c(meta_genes,readListFromExcel(paste(indir,"KEGG_n_Hallmark_genes_for_mRNA-protein_corr.xlsx",sep="/"), sheet=1))
-print(length(meta_genes))
 
 
 # meta_genes["PAM50"] = pam50
@@ -183,4 +188,5 @@ exprdata=list(name="Tumour expressionData",
               metagene=meta_genes) #, cnv=cnv) 
 # Save the list for later access
 save(exprdata,file=paste(outdir,"tumourExpressionData",sep="/"))
+sink()
 
