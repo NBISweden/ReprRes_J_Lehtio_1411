@@ -4,7 +4,7 @@ This is a collaborative project between the [Janne Lehtiö
 group](http://ki.se/en/onkpat/janne-lehtios-group), Department of
 Oncology-Pathology, Karolinska Institutet and the
 [NBIS](http://nbis.se) long-term support (a.k.a. WABI), performed
-during 2015-2017 (NBIS LT project name: J_Lehtio_1411)
+during 2015-2018 (NBIS LT project name: J_Lehtio_1411).
 
 As a part of the NBIS reproducible research policy, this repository
 provides the data-files and R-scripts necessary to perform the
