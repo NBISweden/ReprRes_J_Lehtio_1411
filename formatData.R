@@ -102,6 +102,7 @@ rna_data=rna_data[,!names(rna_data) %in% c("ProbeUID.SampleArray.gDetrendedSigna
 head(rna_data, 5)
 rna_data=convert2Array(mymedian(rna_data))
 
+print(indir)
 # META DATA
 ###########
 # read in the tumour meta data, i.e., PAM50 classification of the tumours
@@ -128,8 +129,13 @@ for(i in seq(1,3)){
   meta_genes = c(meta_genes,readListFromExcel(paste(indir,"Genelists-summary160606.xlsx",sep="/"), sheet=i))
 }
 # Add Henrik's last list
+print(paste(indir,"KEGG_n_Hallmark_genes_for_mRNA-protein_corr.xlsx",sep="/"))
 meta_genes = c(meta_genes,readListFromExcel(paste(indir,"KEGG_n_Hallmark_genes_for_mRNA-protein_corr.xlsx",sep="/"), sheet=1))
 
+# Add Henrik's very last list
+print(paste(indir,"COSMIC_n_BC_drivers.xlsx",sep="/"))
+meta_genes = c(meta_genes,readListFromExcel(paste(indir,"COSMIC_n_BC_drivers.xlsx",sep="/"), sheet=1))
+print(length(meta_genes))
 
 # meta_genes["PAM50"] = pam50
 newnames = names(meta_genes)

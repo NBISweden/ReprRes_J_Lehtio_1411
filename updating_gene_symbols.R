@@ -2,7 +2,7 @@
 
 # Loading files
 
-indir = "DATA/"
+indir = "Data/"
 outdir = "R-files/"
 new_ids = read.table(paste(indir,"Agilent60k.Hg19.annotation.txt", sep =""), header = TRUE)
 
